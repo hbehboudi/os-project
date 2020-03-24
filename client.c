@@ -6,9 +6,9 @@
 #define FIB_DEV_File "/dev/fibonacci"
 
 int main() {
-    int fibonacciDevFile = open(FIB_DEV_File, O_RDWR);
+    int fibonacci_dev_file = open(FIB_DEV_File, O_RDWR);
 
-    if (fibonacciDevFile < 0) {
+    if (fibonacci_dev_file < 0) {
         perror("Failed to open character device");
         exit(1);
     }
@@ -22,13 +22,13 @@ int main() {
         scanf("%d", &number);
     } while(number > 92 || number < 0);
 
-    lseek(fibonacciDevFile, number, SEEK_SET);
+    lseek(fibonacci_dev_file, number, SEEK_SET);
 
-    long long result = read(fibonacciDevFile, buf, 1);
+    long long result = read(fibonacci_dev_file, buf, 1);
 
     printf("Fib(%d) = %lld\n", number, result);
 
-    close(fibonacciDevFile);
+    close(fibonacci_dev_file);
     return 0;
 }
 

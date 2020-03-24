@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 commit=`git rev-list -n 1 --grep '^Clarify license terms' ef0a87f935c9a401b2c2788634e2fb2660d4894d...HEAD`
 if [ x"$commit" != x"7d194108d1e39e2f7c72743cfe80b6d6cd974f9b" ] ; then
     echo -e "${RED}ERROR${NC}: This repository is insane."
-    echo -e "Make sure you did fork from https://github.com/sysprog21/fibdrv recently."
+    echo -e "Make sure you did fork from https://github.com/hbehboudi/os-project recently."
     echo ""
     exit 1
 fi
