@@ -5,6 +5,8 @@
 
 #define FIB_DEV_File "/dev/fibonacci"
 
+#define size 1024
+
 int main() {
     int fibonacci_dev_file = open(FIB_DEV_File, O_RDWR);
 
@@ -13,20 +15,13 @@ int main() {
         exit(1);
     }
 
-    char buf[1];
+    lseek(fibonacci_dev_file, 4, SEEK_SET);
 
-    int number;
+    char buf[size];
 
-    do {
-        printf("Please enter a number between 0-92: ");
-        scanf("%d", &number);
-    } while(number > 92 || number < 0);
+    ssize_t result = read(fibonacci_dev_file, buf, size);
 
-    lseek(fibonacci_dev_file, number, SEEK_SET);
-
-    long long result = read(fibonacci_dev_file, buf, 1);
-
-    printf("Fib(%d) = %lld\n", number, result);
+    printf("%s\n", buf);
 
     close(fibonacci_dev_file);
     return 0;

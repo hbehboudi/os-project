@@ -6,35 +6,115 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <asm/segment.h>
+#include <asm/uaccess.h> 
+#include <linux/uaccess.h>
+#include <linux/buffer_head.h>
+#include <linux/unistd.h>
+#include <linux/types.h>
+#include <linux/dirent.h>
+#include <linux/stat.h>
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("Amir Afsari, Hamed Alimohammadzadeh, Hossein Behboudi");
 
 #define DEV_FIBONACCI_NAME "fibonacci"
+#define bufSize 1024
 
 static dev_t fibonacci_dev = 0;
 static struct cdev *fibonacci_cdev;
 static struct class *fibonacci_class;
 static DEFINE_MUTEX(fibonacci_mutex);
 
-static long long fibonacci_sequence(long long number) {
-    long long previousNum = 0;
-    long long currentNum = 1;
+struct file *file_open(const char *path, int flags, int rights) 
+{
+    struct file *filp = NULL;
+    mm_segment_t oldfs;
+    int err = 0;
 
-    if (number == 0) {
-        return previousNum;
+    oldfs = get_fs();
+    set_fs(get_ds());
+    filp = filp_open(path, flags, rights);
+    set_fs(oldfs);
+
+    if (IS_ERR(filp)) {
+        err = PTR_ERR(filp);
+        return NULL;
     }
-
-    for (int i = 0; i < number - 1; i++) {
-        currentNum += previousNum;
-        previousNum = currentNum - previousNum;
-    }
-
-    return currentNum;
+    
+    return filp;
 }
 
-static ssize_t fibonacci_read(struct file *file, char *buf, size_t size, loff_t *offset) {
-    return (ssize_t) fibonacci_sequence(*offset);
+void file_close(struct file *file) 
+{
+    filp_close(file, NULL);
+}
+
+int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size) 
+{
+    mm_segment_t oldfs;
+    
+    oldfs = get_fs();
+    set_fs(get_ds());
+
+    int ret = vfs_read(file, data, size, &offset);
+
+    set_fs(oldfs);
+    return ret;
+}
+
+static int add_to_result(char *str1, char *str2, char* result, int size, int index) {
+    int i, j;
+
+    for (i = 0; i < bufSize - size; i++) {
+        int find = 1;
+
+        for (j = 0; j < size; j++) {
+            if (str1[i + j] != str2[j]) {
+                find = 0;
+                break;
+            }
+        }
+
+        if (find == 0) {
+            continue;
+        }
+
+        do
+        {
+            result[index] = str1[i];
+            index++;
+            i++;
+        } while (str1[i] != '\n' && str1[i] != '\0');
+
+        break;
+    }
+
+    return index;
+}
+
+static ssize_t fibonacci_read(struct file *file_ptr, char __user *user_buffer, size_t count, loff_t *possition) {
+    char str[bufSize] = "";
+    char result[bufSize] = "";
+
+    char tmp[32];
+    sprintf(tmp, "/proc/%lld/status", *possition);
+
+//  ********
+    struct file *status_file = file_open(tmp, O_RDONLY, 0);
+    file_read(status_file, 0, str, bufSize);
+    file_close(status_file);
+
+    int index = add_to_result(str, "State", result, 5, 0);
+    
+    result[index + 1] = "\0";
+//  ********
+
+    if (copy_to_user(user_buffer, result, count) != 0) {
+        return -EFAULT;
+    }
+
+   return count;
 }
 
 static ssize_t fibonacci_write(struct file *file, const char *buf, size_t size, loff_t *offset) {
