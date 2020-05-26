@@ -122,11 +122,11 @@ static ssize_t process_read(struct file *file_ptr, char __user *user_buffer, siz
         strcat((char*)result, "stopped\n");
     }
 
-    // Start Time
+    // start_time
     sprintf(temp, "\nstart_time: %lld\n", task->start_time);
     strcat((char*)result, temp);
 
-    // Per cpu utime
+    // rt_priority
     sprintf(temp, "\nrt_priority: %d\n", task->rt_priority);
     strcat((char*)result, temp);
 
