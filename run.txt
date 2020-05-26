@@ -2,5 +2,5 @@ make clean
 make unload
 make 
 make load
-sudo chmod 666 /dev/fibonacci
-./client
+sudo chmod 666 /dev/process
+./client --pid 794 --period 1

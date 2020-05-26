@@ -2,28 +2,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
-#define FIB_DEV_File "/dev/fibonacci"
+#define DEV_File "/dev/process"
 
-#define size 1024
+int main(int argc, char const *argv[]) {
+    char *pid_tag = "--pid", *period_tag = "--period";
 
-int main() {
-    int fibonacci_dev_file = open(FIB_DEV_File, O_RDWR);
+    int pid, period = 1, i;
 
-    if (fibonacci_dev_file < 0) {
+    for (i = 0; i < argc; i++)
+    {
+        if (strcmp(argv[i], pid_tag) == 0) {
+            pid = atoi(argv[++i]);
+        } else if (strcmp(argv[i], period_tag) == 0) {
+            period = atoi(argv[++i]);
+        }
+    }
+
+    int dev_file = open(DEV_File, O_RDWR);
+
+    if (dev_file < 0) {
         perror("Failed to open character device");
         exit(1);
     }
 
-    lseek(fibonacci_dev_file, 4, SEEK_SET);
+    char buf[4096];
 
-    char buf[size];
+    while (true)
+    {
+        lseek(dev_file, pid, SEEK_SET);
+        ssize_t result = read(dev_file, buf, 4096);
 
-    ssize_t result = read(fibonacci_dev_file, buf, size);
+        printf("\nPID: %d\n%s\n\n----------------------\n", pid, buf);
 
-    printf("%s\n", buf);
-
-    close(fibonacci_dev_file);
-    return 0;
+        sleep(period);
+    }
 }
-
